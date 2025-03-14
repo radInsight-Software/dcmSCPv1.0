@@ -1,0 +1,42 @@
+# Ignore the virtual environment folder
+myenv/
+
+# Byte-compiled / cached
+__pycache__/
+*.py[cod]
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Logs and databases
+*.log
+db.sqlite3
+
+# Virtual environments
+.env/
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-workspace
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Python package dependencies
+*.egg-info/
+dist/
+build/
+
+# Environment variables and secrets
+.env
+*.pem
+*.key
+*.cvs
+computer_info.txt
+*.zip
+main_protected.c
+main_protected.pyd
+main_protected.pyx
+config.csv

@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>radInsightAI : DicomSCP</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@600&display=swap"
+      rel="stylesheet"
+    />
+    
+    <link rel="icon" href="/static/logo.png" type="image/png">
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f9;
+        background-image:url('/static/bgImage.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
+      .container {
+        display: flex;
+        width: 75%;
+        padding: 20px;        
+        gap: 10px;
+      }
+      .bg-image {
+        background-position: 50%;
+        background-size: cover;
+        height: 100vh;
+        background-image:url('/static/bgImage.png');
+      }
+      .bg-imageShade {
+        background: linear-gradient(
+          302deg,
+          #090909e6 29.33%,
+          #00000052 162.36%
+        );
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        width: 100%;
+        justify-content: center;
+      }
+      .left-panel {
+        /* flex: 1; */
+        background: #202020;
+        border: 1px solid #434343;
+        border-radius: 16px;
+        padding: 10px;
+        width: 450px;
+      }
+      .left-bottom-panel {
+        /* flex: 1; */
+        background: #202020;
+        border: 1px solid #434343;
+        border-radius: 16px;
+        padding: 10px;
+        width: 450px;
+        margin-top: 7px;
+      }
+      .left-panel p {
+        font-family: "Poppins", sans-serif;
+        font-style: normal;
+        color: #ffffff;
+        margin: 8px;
+        font-size: 18px;
+      }
+      .right-panel {
+        flex: 1.5;
+        /* max-height: 500px; */
+        overflow-y: auto;
+        background: #202020;
+        border: 1px solid #434343;
+        border-radius: 16px;
+        padding: 10px;
+        font-family: monospace;
+        font-size: 14px;
+      }
+      .right-panel-title-card {
+        flex: 1.5;
+        /* max-height: 500px; */
+        overflow-y: auto;
+        padding: 10px;
+        justify-content: center;
+        align-items: center;
+      }
+      input {
+        display: block;
+        width: 92%;
+        margin: 10px 0;
+        border: 1px solid #ddd;
+        font-size: 16px;
+        align-items: center;
+        align-self: stretch;
+        background: #232323;
+        border: 1px solid #2d2d2d;
+        border-radius: 8px;
+        color: #fff;
+        display: flex;
+        font-family: poppins !important;
+        font-style: normal;
+        font-weight: 400;
+        justify-content: space-between;
+        line-height: 20px;
+        outline: none;
+        padding: 11px 15px;
+      }
+      button {
+        background-color: #343536;
+        color: white;
+        cursor: pointer;
+        border: none;
+        display: block;
+        width: 99%;
+        padding: 8px 15px;
+        margin: 10px 0;
+        /* border: 1px solid #ddd; */
+        border-radius: 4px;
+        font-size: 18px;
+        font-family: OpenSansRegular !important;
+      }
+      button:hover {
+        background-color: #4b4d4e;
+      }
+      .status {
+        text-align: center;
+        font-size: 18px;
+        margin-top: 20px;
+        color: #d65f30;
+      }
+      .log-header {
+        font-weight: bold;
+        font-size: 16px;
+        margin-bottom: 10px;
+        color: #ffffff;
+        margin-left: 5px;
+      }
+      .log-line {
+        padding: 5px;
+        color: green;
+      }
+      .log-line-error {
+        padding: 5px;
+        color: red;
+      }
+      .log-line:last-child {
+        border-bottom: none;
+      }
+      .radio-group {
+        display: flex;
+        /* flex-direction: column;  */
+        gap: 10px; /* Add spacing between the labels */
+        font-family: Arial, sans-serif; /* Optional: Change font style */
+        margin: 10px; /* Optional: Add margin around the group */
+      }
+      .radio-group input {
+        width: 20px;
+      }
+      .radio-group label {
+        display: flex;
+        align-items: center; /* Vertically center align label and radio button */
+        gap: 5px; /* Add spacing between the radio button and text */
+        font-size: 16px; /* Adjust text size */
+        cursor: pointer; /* Make labels clickable */
+        color: #ffffff;
+      }
+
+      .highlight {
+        color: #d65f30; /* Dark orange */
+        font-weight: bold;
+        }
+
+        
+
+     
+    </style>
+
+ 
+    <script>
+      function toggleInputFields() {
+        const fileSavingRadio = document.getElementById("fileSaving");
+        const dicomWebServerRadio = document.getElementById("dicomWebServer");
+        const dicomFolderPathInput = document.getElementById("dicomFolderPath");
+        const dicomWebServerInput = document.getElementById(
+          "dicomWebServerInput"
+        );
+
+        if (fileSavingRadio.checked) {
+          dicomFolderPathInput.style.display = "block";
+          dicomWebServerInput.style.display = "none";
+        } else if (dicomWebServerRadio.checked) {
+          dicomFolderPathInput.style.display = "none";
+          dicomWebServerInput.style.display = "block";
+        }
+      }
+
+      async function startServer() {
+        const aeTitle = document.getElementById("aeTitle").value;
+        const port = document.getElementById("port").value;
+        const ipAddress = document.getElementById("ipAddress").value;
+        const dicomFolderPath =
+          document.getElementById("dicomFolderPath").value;
+        const dicomWebServer = document.getElementById(
+          "dicomWebServerInput"
+        ).value;
+        const fileSaving = document.getElementById("fileSaving").checked;
+
+        if (
+          !aeTitle ||
+          !port ||
+          !ipAddress ||
+          (!dicomFolderPath && fileSaving) ||
+          (!dicomWebServer && !fileSaving)
+        ) {
+          updateStatus("Please provide all required fields.");
+          return;
+        }
+
+        try {
+          const response = await fetch("/start", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              aeTitle,
+              port: parseInt(port),
+              ipAddress,
+              fileSaving,
+              dicomFolderPath: fileSaving ? dicomFolderPath : "",
+              dicomWebServer: !fileSaving ? dicomWebServer : "",
+            }),
+          });
+          const data = await response.json();
+          updateStatus(data.message || "Server started successfully.");
+          checkStatus();
+          loadLogs();
+        } catch (error) {
+          updateStatus("Error starting server. Check the logs.");
+        }
+      }
+
+      async function stopServer() {
+        try {
+          const response = await fetch("/stop", { method: "POST" });
+          const data = await response.json();
+          updateStatus(data.message || "Server stopped successfully.");
+          checkStatus();
+          loadLogs();
+        } catch (error) {
+          updateStatus("Error stopping server. Check the logs.");
+        }
+      }
+      
+        async function loadLogs() {
+        try {
+          const response = await fetch("/logs");
+          const data = await response.json();
+          const logContainer = document.getElementById("logContainer");
+          logContainer.innerHTML = '<div class="log-header">Server Logs</div>';
+
+          if (!data.logs || !Array.isArray(data.logs)) {
+            logContainer.innerHTML += '<div class="log-line-error">No logs available.</div>';
+            return;
+          }
+
+          // Get today's date in "DD-MMM-YYYY" format (with leading zero)
+          const today = new Date();
+          const day = String(today.getDate()).padStart(2, "0");
+          const month = today.toLocaleString("en-US", { month: "short" });
+          const year = today.getFullYear();
+          const formattedToday = `${day}-${month}-${year}`;
+
+          console.log("Today's Date:", formattedToday);
+          console.log("Raw Logs:", data.logs);
+
+          // Filter logs by checking if they contain today's date
+          const todayLogs = data.logs.filter((line) => 
+            line.trim().includes(formattedToday)
+          );
+
+          console.log("Today's Logs:", todayLogs);
+
+          if (todayLogs.length > 0) {
+            todayLogs.forEach((line) => {
+              const logLine = document.createElement("div");
+              logLine.className = "log-line";
+
+              // Apply color based on log type
+              if (line.includes("[INFO]")) {
+                logLine.style.color = "green";
+              } else if (line.includes("[ERROR]")) {
+                logLine.style.color = "red";
+              } else {
+                logLine.style.color = "white"; // Default color for logs
+              }
+
+              logLine.textContent = line.trim();
+              logContainer.appendChild(logLine);
+            });
+          } else {
+            logContainer.insertAdjacentHTML("beforeend", '<div class="log-line">No logs for today.</div>');
+          }
+        } catch (error) {
+          console.error("Error loading logs:", error);
+          const logContainer = document.getElementById("logContainer");
+          logContainer.innerHTML = '<div class="log-header">Server Logs</div>';
+          logContainer.insertAdjacentHTML(
+            "beforeend",
+            '<div class="log-line-error">Error loading logs. Check the server.</div>'
+          );
+        }
+      }
+
+      
+      async function checkStatus() {
+        try {
+          const response = await fetch("/status");
+          const data = await response.json();
+          const startButton = document.getElementById("startButton");
+          const stopButton = document.getElementById("stopButton");
+
+          if (data.running) {
+            updateStatus("Server is running.");
+            startButton.style.display = "none";
+            stopButton.style.display = "block";
+          } else {
+            updateStatus("Server is stopped.");
+            startButton.style.display = "block";
+            stopButton.style.display = "none";
+          }
+        } catch (error) {
+          updateStatus("Error checking server status. Check the logs.");
+        }
+      }
+
+      async function logStatus() {
+        try {
+          document.getElementById("logStatusButton").style.display = "none";
+          document.getElementById("rightpaneltitlecard").style.display = "none";
+          document.getElementById("closeLogButton").style.display =
+            "inline-block";
+          document.getElementById("logContainer").style.display =
+            "inline-block";
+          // Set margins dynamically
+          document.getElementById("closeLogButton").style.margin = "0px";
+          document.getElementById("logStatusButton").style.margin = "0px";
+        } catch (error) {
+          console.error("Error logging status:", error);
+        }
+      }
+
+      function closeLog() {
+        document.getElementById("closeLogButton").style.display = "none";
+        document.getElementById("logStatusButton").style.display =
+          "inline-block";
+        document.getElementById("rightpaneltitlecard").style.display =
+          "inline-block";
+        document.getElementById("logContainer").style.display = "none";
+        document.getElementById("closeLogButton").style.margin = "0px";
+        document.getElementById("logStatusButton").style.margin = "0px";
+      }
+
+      async function saveConfig() {
+        const aeTitle = document.getElementById("aeTitle").value;
+        const port = document.getElementById("port").value;
+        const ipAddress = document.getElementById("ipAddress").value;
+        const dicomFolderPath =
+          document.getElementById("dicomFolderPath").value;
+        const dicomWebServer = document.getElementById(
+          "dicomWebServerInput"
+        ).value;
+        const fileSaving = document.getElementById("fileSaving").checked;
+
+        if (
+          !aeTitle ||
+          !port ||
+          !ipAddress ||
+          (!dicomFolderPath && fileSaving) ||
+          (!dicomWebServer && !fileSaving)
+        ) {
+          updateStatus("Please provide all required fields to save.");
+          return;
+        }
+
+        try {
+          const response = await fetch("/save-config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              aeTitle,
+              port: parseInt(port),
+              ipAddress,
+              fileSaving,
+              dicomFolderPath: fileSaving ? dicomFolderPath : "",
+              dicomWebServer: !fileSaving ? dicomWebServer : "",
+            }),
+          });
+          const data = await response.json();
+          updateStatus(data.message || "Configuration saved successfully.");
+        } catch (error) {
+          updateStatus("Error saving configuration. Check the logs.");
+        }
+      }
+
+      async function loadConfig() {
+        try {
+          const response = await fetch("/load-config");
+          const data = await response.json();
+
+          document.getElementById("aeTitle").value = data.aeTitle || "";
+          document.getElementById("port").value = data.port || "";
+          document.getElementById("ipAddress").value = data.ipAddress || "";
+
+          if (data.fileSaving) {
+            document.getElementById("fileSaving").checked = true;
+            document.getElementById("dicomFolderPath").value =
+              data.dicomFolderPath || "";
+          } else {
+            document.getElementById("dicomWebServer").checked = true;
+            document.getElementById("dicomWebServerInput").value =
+              data.dicomWebServer || "";
+          }
+
+          toggleInputFields();
+          updateStatus("Configuration loaded successfully.");
+        } catch (error) {
+          updateStatus("Error loading configuration. Check the server.");
+        }
+      }
+
+      function updateStatus(message) {
+        const statusDiv = document.getElementById("status");
+        statusDiv.textContent = message;
+      }
+
+      window.onload = () => {
+        toggleInputFields();
+        loadConfig();
+        loadLogs();
+        checkStatus();
+      };
+    </script>
+ 
+<!-- JavaScript to Automatically Set the Year -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+      document.getElementById("year").textContent = new Date().getFullYear();
+  });
+</script>
+
+  </head>
+  <body>
+    <div class="bg-image">
+  
+
+      <div class="bg-imageShade">
+        <div class="container">
+          <div id="rightpaneltitlecard" class="right-panel-title-card">
+            <h1
+              style="
+                margin-bottom: 0px;
+                margin-top: 200px;
+                color: rgb(255, 255, 255);
+                font-family: 'Open Sans', sans-serif;
+                font-size: 75px;
+                font-style: normal;
+              "
+            >
+            radInsight<span class="highlight">AI</span>
+            </h1>
+            <p
+              style="
+                margin: 5px 0px;
+                color: rgb(90, 134, 190);
+                font-family: 'Open Sans', sans-serif;
+                font-size: 25px;
+                font-style: normal;
+              "
+            >
+              Feel IntellectSculpt
+            </p>
+          </div>
+          <div id="logContainer" class="right-panel" style="display: none">
+            <div class="log-header">DicomSCP Server Logs</div>
+            <div class="log-line">No logs available.</div>
+          </div>
+          <div>
+            <div class="left-panel">
+              <p style="color:  rgb(90, 134, 190)">Welcome DicomSCP !</p>
+              <input
+                type="text"
+                id="aeTitle"
+                placeholder="Enter AE Title (e.g., STORAGE_SCP)"
+              />
+              <input
+                type="number"
+                id="port"
+                placeholder="Enter Port Number (e.g., 11112)"
+              />
+              <input
+                type="text"
+                id="ipAddress"
+                placeholder="Enter IP Address (e.g., 192.168.1.1)"
+              />
+
+              <div class="radio-group">
+                <label>
+                  <input
+                    type="radio"
+                    id="fileSaving"
+                    name="storageType"
+                    value="fileSaving"
+                    checked
+                    onclick="toggleInputFields()"
+                  />
+                  File Saving
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    id="dicomWebServer"
+                    name="storageType"
+                    value="dicomWebServer"
+                    onclick="toggleInputFields()"
+                  />
+                  DICOM Web Server
+                </label>
+              </div>
+
+              <input
+                type="text"
+                id="dicomFolderPath"
+                placeholder="Enter DICOM Folder Path (e.g., /path/to/dicom)"
+                style="display: block"
+              />
+              <input
+                type="text"
+                id="dicomWebServerInput"
+                placeholder="Enter DICOM Web Server URL (e.g., http://example.com)"
+                style="display: none"
+              />
+
+              <button id="saveConfigButton" onclick="saveConfig()">
+                Save Configuration
+              </button>
+            </div>
+            <div class="left-bottom-panel">
+              <button
+                id="startButton"
+                onclick="startServer()"
+                style="display: none"
+              >
+                Start Server
+              </button>
+              <button
+                id="stopButton"
+                onclick="stopServer()"
+                style="display: none"
+              >
+                Stop Server
+              </button>
+              <button onclick="checkStatus()">Check Status</button>
+              <button id="logStatusButton" onclick="logStatus()">
+                Log Status
+              </button>
+              <button
+                id="closeLogButton"
+                onclick="closeLog()"
+                style="display: none"
+              >
+                Close Log
+              </button>
+
+              <div id="status" class="status">Status: Unknown</div>
+            </div>
+          </div>
+        </div>
+        <label
+          style="
+            color: rgb(255, 255, 255);
+            text-align: left;
+            font-family: SourceSansProRegular;
+            font-size: 15px;
+            font-style: normal;
+            font-weight: 400;
+            line-height: 20px;
+            position: absolute;
+            bottom: 10px;
+            width: 95%;
+            padding-left: 70px;
+          "
+        >
+        <p>
+          &copy; Copyright <span id="year"></span>, radInsight
+          <span style="color: #d65f30; font-weight: bold;">AI</span>, V1.0.0
+      </p>
+      </label
+        >
+      </div>
+    </div>
+  </body>
+</html>
