@@ -40,3 +40,4 @@ main_protected.c
 main_protected.pyd
 main_protected.pyx
 config.csv
+main.c
